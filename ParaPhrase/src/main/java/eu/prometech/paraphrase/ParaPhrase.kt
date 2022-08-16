@@ -52,9 +52,31 @@ class ParaPhrase(
             .createSocket(url)
             .addListener(MessageListener(listener))
             .addHeader("Medical", medical.toString())
+    }
 
+    companion object {
+        fun getLogTag(): String {
+            return "ParaPhrase"
+        }
+    }
+
+    private fun askPermission() {
+        permissionGranted = ActivityCompat.checkSelfPermission(
+            context,
+            arrayOf(Manifest.permission.RECORD_AUDIO)[0]) == PackageManager.PERMISSION_GRANTED
+
+        if (!permissionGranted) {
+            ActivityCompat.requestPermissions(context, arrayOf(Manifest.permission.RECORD_AUDIO), 200)
+        }
+
+        audioRecord = AudioRecord(
+            MediaRecorder.AudioSource.VOICE_RECOGNITION, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT, AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT) * 10
+        )
+    }
+
+    public fun connect() {
         val executor = Executors.newSingleThreadExecutor()
-
         val future: Future<WebSocket> = ws!!.connect(executor)
 
         try {
@@ -102,25 +124,10 @@ class ParaPhrase(
         thread!!.start()
     }
 
-    companion object {
-        fun getLogTag(): String {
-            return "ParaPhrase"
-        }
-    }
-
-    private fun askPermission() {
-        permissionGranted = ActivityCompat.checkSelfPermission(
-            context,
-            arrayOf(Manifest.permission.RECORD_AUDIO)[0]) == PackageManager.PERMISSION_GRANTED
-
-        if (!permissionGranted) {
-            ActivityCompat.requestPermissions(context, arrayOf(Manifest.permission.RECORD_AUDIO), 200)
-        }
-
-        audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_RECOGNITION, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT, AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT) * 10
-        )
-
+    public fun disconnect() {
+        thread!!.interrupt()
+        audioRecord!!.stop()
+        audioRecord!!.release()
+        ws!!.disconnect()
     }
 }
