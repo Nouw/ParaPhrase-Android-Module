@@ -89,6 +89,8 @@ class ParaPhrase(
             throw e
         }
 
+        audioRecord!!.startRecording()
+
         this.thread = Thread(Runnable {
             val buf = ByteArray(BUF_SIZE)
 
